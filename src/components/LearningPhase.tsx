@@ -118,12 +118,19 @@ export default function LearningPhase({
     )
   }
 
+  // Check if this is a completed topic (review mode)
+  const isReviewMode = completedTopics.includes(selectedTopic)
+
   return (
     <LessonContent
       topic={selectedTopic}
       studentLevel={assessmentResult.level}
+      isReview={isReviewMode}
       onComplete={(score) => {
-        onTopicComplete(selectedTopic, score)
+        if (!isReviewMode) {
+          // Only add to completed topics if it's not already completed
+          onTopicComplete(selectedTopic, score)
+        }
         setSelectedTopic(null)
       }}
       onBack={() => setSelectedTopic(null)}

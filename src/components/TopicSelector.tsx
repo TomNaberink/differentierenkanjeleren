@@ -169,32 +169,36 @@ export default function TopicSelector({
     )
   }
 
-  const TopicCard = ({ topic, isRecommended = false }: { topic: Topic, isRecommended?: boolean }) => {
+  const TopicCard = ({ topic, isRecommended = false, isCompleted = false }: { 
+    topic: Topic, 
+    isRecommended?: boolean,
+    isCompleted?: boolean 
+  }) => {
     const available = isTopicAvailable(topic)
-    const completed = completedTopics.includes(topic.id)
     
     return (
       <div
         className={`relative p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
-          completed 
-            ? 'bg-green-50 border-green-200' 
+          isCompleted 
+            ? 'bg-green-50 border-green-300 hover:border-green-400 hover:shadow-lg' 
             : available
               ? isRecommended
                 ? 'bg-blue-50 border-blue-300 hover:border-blue-400 hover:shadow-lg'
                 : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-md'
               : 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
         }`}
-        onClick={() => available && !completed && onTopicSelect(topic.id)}
+        onClick={() => (available || isCompleted) && onTopicSelect(topic.id)}
       >
-        {isRecommended && !completed && (
+        {isRecommended && !isCompleted && (
           <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
             Aanbevolen
           </div>
         )}
         
-        {completed && (
-          <div className="absolute -top-2 -right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-            ✓ Voltooid
+        {isCompleted && (
+          <div className="absolute -top-2 -right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center space-x-1">
+            <span>✓</span>
+            <span>Voltooid</span>
           </div>
         )}
 
@@ -204,7 +208,7 @@ export default function TopicSelector({
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
               <h3 className={`font-semibold ${
-                completed ? 'text-green-800' : available ? 'text-gray-800' : 'text-gray-500'
+                isCompleted ? 'text-green-800' : available ? 'text-gray-800' : 'text-gray-500'
               }`}>
                 {topic.title}
               </h3>
@@ -214,19 +218,25 @@ export default function TopicSelector({
             </div>
             
             <p className={`text-sm mb-3 ${
-              completed ? 'text-green-600' : available ? 'text-gray-600' : 'text-gray-400'
+              isCompleted ? 'text-green-600' : available ? 'text-gray-600' : 'text-gray-400'
             }`}>
               {topic.description}
             </p>
             
             <div className="flex items-center justify-between">
               <span className={`text-xs ${
-                completed ? 'text-green-500' : available ? 'text-gray-500' : 'text-gray-400'
+                isCompleted ? 'text-green-500' : available ? 'text-gray-500' : 'text-gray-400'
               }`}>
                 ⏱️ {topic.estimatedTime}
               </span>
               
-              {!available && !completed && topic.prerequisites.length > 0 && (
+              {isCompleted && (
+                <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded">
+                  🔄 Herhalen
+                </span>
+              )}
+              
+              {!available && !isCompleted && topic.prerequisites.length > 0 && (
                 <span className="text-xs text-gray-400">
                   Vereist: {topic.prerequisites.join(', ')}
                 </span>
@@ -261,28 +271,7 @@ export default function TopicSelector({
         </div>
       )}
 
-      {/* Other Topics */}
-      {otherTopics.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
-            <span className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-              📚
-            </span>
-            Alle onderwerpen
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Andere beschikbare onderwerpen die je kunt verkennen.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {otherTopics.map(topic => (
-              <TopicCard key={topic.id} topic={topic} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Completed Topics */}
+      {/* Completed Topics - Now Clickable for Review */}
       {completedTopics.length > 0 && (
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
@@ -292,15 +281,37 @@ export default function TopicSelector({
             Voltooide onderwerpen
           </h2>
           <p className="text-gray-600 mb-6">
-            Goed gedaan! Deze onderwerpen heb je al succesvol afgerond.
+            Goed gedaan! Deze onderwerpen heb je al succesvol afgerond. 
+            <span className="font-medium text-green-700"> Klik op een onderwerp om het te herhalen.</span>
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {allTopics
               .filter(topic => completedTopics.includes(topic.id))
               .map(topic => (
-                <TopicCard key={topic.id} topic={topic} />
+                <TopicCard key={topic.id} topic={topic} isCompleted={true} />
               ))}
+          </div>
+        </div>
+      )}
+
+      {/* Other Topics */}
+      {otherTopics.length > 0 && (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+            <span className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+              📚
+            </span>
+            Andere onderwerpen
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Deze onderwerpen worden beschikbaar zodra je de vereiste onderwerpen hebt voltooid.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {otherTopics.map(topic => (
+              <TopicCard key={topic.id} topic={topic} />
+            ))}
           </div>
         </div>
       )}

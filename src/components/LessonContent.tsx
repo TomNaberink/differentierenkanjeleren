@@ -9,6 +9,7 @@ interface LessonContentProps {
   studentLevel: StudentLevel
   onComplete: (score: number) => void
   onBack: () => void
+  isReview?: boolean // New prop to indicate if this is a review session
 }
 
 interface LessonSection {
@@ -235,6 +236,65 @@ const lessonData: Record<string, Record<StudentLevel, LessonSection[]>> = {
         ]
       }
     ]
+  },
+  'polynomial-functions': {
+    beginner: [
+      {
+        type: 'explanation',
+        title: 'Polynoomfuncties',
+        content: 'Polynoomfuncties zijn functies die bestaan uit termen met verschillende machten van x, zoals f(x) = 3x³ + 2x² - 5x + 1.'
+      },
+      {
+        type: 'practice',
+        title: 'Polynomen Differentiëren',
+        content: 'Oefen met het differentiëren van polynomen:',
+        exercises: [
+          {
+            question: 'Wat is de afgeleide van f(x) = x³ + 2x² + x?',
+            answer: '3x² + 4x + 1',
+            hint: 'Differentieer elke term apart'
+          }
+        ]
+      }
+    ],
+    intermediate: [
+      {
+        type: 'explanation',
+        title: 'Complexere Polynomen',
+        content: 'We gaan kijken naar polynomen met hogere graden en meer complexe coëfficiënten.'
+      },
+      {
+        type: 'practice',
+        title: 'Geavanceerde Polynomen',
+        content: 'Uitdagendere polynoomfuncties:',
+        exercises: [
+          {
+            question: 'Wat is de afgeleide van f(x) = 2x⁵ - 3x⁴ + x² - 7?',
+            answer: '10x⁴ - 12x³ + 2x',
+            hint: 'Gebruik de machtsregel voor elke term'
+          }
+        ]
+      }
+    ],
+    advanced: [
+      {
+        type: 'explanation',
+        title: 'Polynomen met Gebroken Machten',
+        content: 'Geavanceerde polynomen kunnen ook gebroken en negatieve machten bevatten.'
+      },
+      {
+        type: 'practice',
+        title: 'Complexe Polynomen',
+        content: 'Polynomen met speciale machten:',
+        exercises: [
+          {
+            question: 'Wat is de afgeleide van f(x) = x^(3/2) + x^(-1/2)?',
+            answer: '(3/2)x^(1/2) - (1/2)x^(-3/2)',
+            hint: 'Gebruik de machtsregel ook voor gebroken machten'
+          }
+        ]
+      }
+    ]
   }
 }
 
@@ -242,7 +302,8 @@ export default function LessonContent({
   topic, 
   studentLevel, 
   onComplete, 
-  onBack 
+  onBack,
+  isReview = false
 }: LessonContentProps) {
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0)
   const [exerciseAnswers, setExerciseAnswers] = useState<Record<number, string>>({})
@@ -319,7 +380,14 @@ export default function LessonContent({
       })
       
       const score = totalExercises > 0 ? Math.round((correctAnswers / totalExercises) * 100) : 100
-      onComplete(score)
+      
+      // For review sessions, don't add to completed topics again
+      if (isReview) {
+        alert(`🎉 Herhaling voltooid! Je hebt ${correctAnswers} van ${totalExercises} opgaven correct beantwoord.`)
+        onBack() // Just go back to topic selector
+      } else {
+        onComplete(score)
+      }
     } else {
       setCurrentSectionIndex(prev => prev + 1)
     }
@@ -329,6 +397,20 @@ export default function LessonContent({
     if (currentSectionIndex > 0) {
       setCurrentSectionIndex(prev => prev - 1)
     }
+  }
+
+  const getTopicTitle = (topicId: string): string => {
+    const topicTitles: Record<string, string> = {
+      'basic-rules': 'Basisregels van Differentiëren',
+      'polynomial-functions': 'Polynoomfuncties',
+      'trigonometric-functions': 'Goniometrische Functies',
+      'exponential-functions': 'Exponentiële en Logaritmische Functies',
+      'chain-rule': 'Kettingregel',
+      'product-rule': 'Productregel',
+      'quotient-rule': 'Quotiëntregel',
+      'implicit-differentiation': 'Impliciete Differentiatie'
+    }
+    return topicTitles[topicId] || topicId
   }
 
   if (!currentSection) {
@@ -370,11 +452,32 @@ export default function LessonContent({
               {currentSectionIndex + 1} van {sections.length}
             </div>
           </div>
+
+          {/* Topic Title with Review Indicator */}
+          <div className="mb-4">
+            <div className="flex items-center space-x-3">
+              <h1 className="text-xl font-bold text-gray-800">
+                {getTopicTitle(topic)}
+              </h1>
+              {isReview && (
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  🔄 Herhaling
+                </span>
+              )}
+            </div>
+            {isReview && (
+              <p className="text-sm text-green-600 mt-1">
+                Je herhaalt dit onderwerp om je kennis op te frissen!
+              </p>
+            )}
+          </div>
           
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className={`h-2 rounded-full transition-all duration-300 ${
+                isReview ? 'bg-green-600' : 'bg-blue-600'
+              }`}
               style={{ width: `${((currentSectionIndex + 1) / sections.length) * 100}%` }}
             ></div>
           </div>
@@ -530,9 +633,16 @@ export default function LessonContent({
             
             <button
               onClick={handleNext}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className={`px-6 py-2 text-white rounded-lg transition-colors ${
+                isReview 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
             >
-              {isLastSection ? 'Les voltooien' : 'Volgende'}
+              {isLastSection 
+                ? (isReview ? 'Herhaling voltooien' : 'Les voltooien') 
+                : 'Volgende'
+              }
             </button>
           </div>
         </div>
