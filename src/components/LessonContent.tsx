@@ -1,0 +1,408 @@
+'use client'
+
+import { useState } from 'react'
+import { StudentLevel } from './DifferentiationApp'
+
+interface LessonContentProps {
+  topic: string
+  studentLevel: StudentLevel
+  onComplete: (score: number) => void
+  onBack: () => void
+}
+
+interface LessonSection {
+  type: 'explanation' | 'example' | 'practice'
+  title: string
+  content: string
+  examples?: Array<{
+    problem: string
+    solution: string
+    steps: string[]
+  }>
+  exercises?: Array<{
+    question: string
+    answer: string
+    hint?: string
+  }>
+}
+
+const lessonData: Record<string, Record<StudentLevel, LessonSection[]>> = {
+  'basic-rules': {
+    beginner: [
+      {
+        type: 'explanation',
+        title: 'Wat is differentiëren?',
+        content: 'Differentiëren is het vinden van de afgeleide van een functie. De afgeleide vertelt ons hoe snel een functie verandert op elk punt. Het is als het vinden van de helling van de raaklijn aan de grafiek.'
+      },
+      {
+        type: 'explanation',
+        title: 'De Machtsregel',
+        content: 'De belangrijkste regel voor differentiëren is de machtsregel: Als f(x) = x^n, dan is f\'(x) = n·x^(n-1). Dit betekent dat je de macht naar voren haalt en de macht met 1 vermindert.'
+      },
+      {
+        type: 'example',
+        title: 'Voorbeelden van de Machtsregel',
+        content: 'Laten we een paar eenvoudige voorbeelden bekijken:',
+        examples: [
+          {
+            problem: 'f(x) = x²',
+            solution: 'f\'(x) = 2x',
+            steps: [
+              'Gebruik de machtsregel: d/dx(x^n) = n·x^(n-1)',
+              'Hier is n = 2',
+              'Dus: f\'(x) = 2·x^(2-1) = 2x'
+            ]
+          },
+          {
+            problem: 'f(x) = x³',
+            solution: 'f\'(x) = 3x²',
+            steps: [
+              'Gebruik de machtsregel met n = 3',
+              'f\'(x) = 3·x^(3-1) = 3x²'
+            ]
+          }
+        ]
+      },
+      {
+        type: 'practice',
+        title: 'Oefenen met de Machtsregel',
+        content: 'Probeer deze opgaven zelf op te lossen:',
+        exercises: [
+          {
+            question: 'Wat is de afgeleide van f(x) = x⁴?',
+            answer: '4x³',
+            hint: 'Gebruik de machtsregel: breng de macht naar voren en verminder met 1'
+          },
+          {
+            question: 'Wat is de afgeleide van f(x) = x⁵?',
+            answer: '5x⁴',
+            hint: 'De macht is 5, dus de afgeleide wordt 5·x^(5-1)'
+          }
+        ]
+      }
+    ],
+    intermediate: [
+      {
+        type: 'explanation',
+        title: 'Basisregels Samenvatting',
+        content: 'Je kent al de basis van differentiëren. Laten we de belangrijkste regels snel doornemen en uitbreiden naar meer complexe situaties.'
+      },
+      {
+        type: 'explanation',
+        title: 'Uitgebreide Machtsregel',
+        content: 'De machtsregel werkt ook voor negatieve en gebroken machten: d/dx(x^n) = n·x^(n-1) voor alle reële getallen n.'
+      },
+      {
+        type: 'example',
+        title: 'Complexere Voorbeelden',
+        content: 'Voorbeelden met coëfficiënten en meerdere termen:',
+        examples: [
+          {
+            problem: 'f(x) = 3x² + 5x - 2',
+            solution: 'f\'(x) = 6x + 5',
+            steps: [
+              'Differentieer elke term apart (somregel)',
+              'd/dx(3x²) = 3·2x = 6x',
+              'd/dx(5x) = 5',
+              'd/dx(-2) = 0 (constante regel)',
+              'Dus: f\'(x) = 6x + 5'
+            ]
+          }
+        ]
+      }
+    ],
+    advanced: [
+      {
+        type: 'explanation',
+        title: 'Geavanceerde Toepassingen',
+        content: 'Als gevorderde student gaan we direct naar complexere toepassingen van de basisregels en bereiden we voor op de kettingregel en productregel.'
+      }
+    ]
+  },
+  'chain-rule': {
+    beginner: [
+      {
+        type: 'explanation',
+        title: 'Inleiding tot Samengestelde Functies',
+        content: 'Voordat we de kettingregel leren, moeten we begrijpen wat samengestelde functies zijn. Een samengestelde functie is een functie binnen een functie, zoals f(g(x)).'
+      }
+    ],
+    intermediate: [
+      {
+        type: 'explanation',
+        title: 'De Kettingregel',
+        content: 'De kettingregel wordt gebruikt om samengestelde functies te differentiëren. Als y = f(g(x)), dan is dy/dx = f\'(g(x)) · g\'(x).'
+      },
+      {
+        type: 'example',
+        title: 'Kettingregel Voorbeelden',
+        content: 'Laten we de kettingregel toepassen:',
+        examples: [
+          {
+            problem: 'f(x) = (2x + 1)³',
+            solution: 'f\'(x) = 6(2x + 1)²',
+            steps: [
+              'Identificeer de binnen- en buitenfunctie',
+              'Buitenfunctie: u³, binnenfunctie: u = 2x + 1',
+              'Afgeleide buitenfunctie: 3u²',
+              'Afgeleide binnenfunctie: 2',
+              'Kettingregel: 3(2x + 1)² · 2 = 6(2x + 1)²'
+            ]
+          }
+        ]
+      }
+    ],
+    advanced: [
+      {
+        type: 'explanation',
+        title: 'Complexe Kettingregel Toepassingen',
+        content: 'Voor gevorderde studenten behandelen we meervoudige samenstellingen en combinaties met andere regels.'
+      }
+    ]
+  }
+}
+
+export default function LessonContent({ 
+  topic, 
+  studentLevel, 
+  onComplete, 
+  onBack 
+}: LessonContentProps) {
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0)
+  const [exerciseAnswers, setExerciseAnswers] = useState<Record<number, string>>({})
+  const [showHints, setShowHints] = useState<Record<number, boolean>>({})
+  const [showSolutions, setShowSolutions] = useState<Record<number, boolean>>({})
+
+  const sections = lessonData[topic]?.[studentLevel] || []
+  const currentSection = sections[currentSectionIndex]
+  const isLastSection = currentSectionIndex === sections.length - 1
+
+  const handleExerciseAnswer = (exerciseIndex: number, answer: string) => {
+    setExerciseAnswers(prev => ({
+      ...prev,
+      [exerciseIndex]: answer
+    }))
+  }
+
+  const toggleHint = (exerciseIndex: number) => {
+    setShowHints(prev => ({
+      ...prev,
+      [exerciseIndex]: !prev[exerciseIndex]
+    }))
+  }
+
+  const toggleSolution = (exerciseIndex: number) => {
+    setShowSolutions(prev => ({
+      ...prev,
+      [exerciseIndex]: !prev[exerciseIndex]
+    }))
+  }
+
+  const handleNext = () => {
+    if (isLastSection) {
+      // Calculate score based on correct answers
+      let correctAnswers = 0
+      let totalExercises = 0
+      
+      sections.forEach(section => {
+        if (section.exercises) {
+          section.exercises.forEach((exercise, index) => {
+            totalExercises++
+            const userAnswer = exerciseAnswers[index]?.toLowerCase().trim()
+            const correctAnswer = exercise.answer.toLowerCase().trim()
+            if (userAnswer === correctAnswer) {
+              correctAnswers++
+            }
+          })
+        }
+      })
+      
+      const score = totalExercises > 0 ? Math.round((correctAnswers / totalExercises) * 100) : 100
+      onComplete(score)
+    } else {
+      setCurrentSectionIndex(prev => prev + 1)
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentSectionIndex > 0) {
+      setCurrentSectionIndex(prev => prev - 1)
+    }
+  }
+
+  if (!currentSection) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          Les niet beschikbaar
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Deze les is nog niet beschikbaar voor jouw niveau.
+        </p>
+        <button
+          onClick={onBack}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Terug naar overzicht
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={onBack}
+            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Terug naar overzicht
+          </button>
+          
+          <div className="text-sm text-gray-500">
+            {currentSectionIndex + 1} van {sections.length}
+          </div>
+        </div>
+        
+        {/* Progress Bar */}
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentSectionIndex + 1) / sections.length) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-6">
+        <div className="flex items-center mb-6">
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+            currentSection.type === 'explanation' ? 'bg-blue-100 text-blue-600' :
+            currentSection.type === 'example' ? 'bg-green-100 text-green-600' :
+            'bg-purple-100 text-purple-600'
+          }`}>
+            {currentSection.type === 'explanation' ? '📖' :
+             currentSection.type === 'example' ? '💡' : '✏️'}
+          </span>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {currentSection.title}
+          </h2>
+        </div>
+
+        <div className="prose max-w-none">
+          <p className="text-gray-700 mb-6 leading-relaxed">
+            {currentSection.content}
+          </p>
+
+          {/* Examples */}
+          {currentSection.examples && (
+            <div className="space-y-6">
+              {currentSection.examples.map((example, index) => (
+                <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <h4 className="font-semibold text-green-800 mb-3">
+                    Voorbeeld {index + 1}: {example.problem}
+                  </h4>
+                  
+                  <div className="bg-white p-4 rounded border mb-4">
+                    <p className="font-medium text-gray-800 mb-2">
+                      Oplossing: {example.solution}
+                    </p>
+                    
+                    <div className="text-sm text-gray-600">
+                      <p className="font-medium mb-2">Stappen:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        {example.steps.map((step, stepIndex) => (
+                          <li key={stepIndex}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Exercises */}
+          {currentSection.exercises && (
+            <div className="space-y-6">
+              {currentSection.exercises.map((exercise, index) => (
+                <div key={index} className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                  <h4 className="font-semibold text-purple-800 mb-3">
+                    Opgave {index + 1}: {exercise.question}
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={exerciseAnswers[index] || ''}
+                      onChange={(e) => handleExerciseAnswer(index, e.target.value)}
+                      placeholder="Typ je antwoord hier..."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                    />
+                    
+                    <div className="flex space-x-3">
+                      {exercise.hint && (
+                        <button
+                          onClick={() => toggleHint(index)}
+                          className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                        >
+                          {showHints[index] ? 'Verberg hint' : 'Toon hint'}
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => toggleSolution(index)}
+                        className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                      >
+                        {showSolutions[index] ? 'Verberg oplossing' : 'Toon oplossing'}
+                      </button>
+                    </div>
+                    
+                    {showHints[index] && exercise.hint && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                        <p className="text-yellow-800 text-sm">
+                          <strong>Hint:</strong> {exercise.hint}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {showSolutions[index] && (
+                      <div className="bg-gray-50 border border-gray-200 rounded p-3">
+                        <p className="text-gray-800 text-sm">
+                          <strong>Oplossing:</strong> {exercise.answer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+          <button
+            onClick={handlePrevious}
+            disabled={currentSectionIndex === 0}
+            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Vorige
+          </button>
+          
+          <button
+            onClick={handleNext}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {isLastSection ? 'Les voltooien' : 'Volgende'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
